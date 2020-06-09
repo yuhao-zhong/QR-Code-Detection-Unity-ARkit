@@ -1,61 +1,75 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
-//[RequireComponent(typeof(ARRaycastManager))]
 
+[RequireComponent(typeof(ARRaycastManager))]
 public class PlacementController : MonoBehaviour
 {
-
-    [SerializeField] private GameObject cubePrefab;
     [SerializeField] private GameObject spherePrefab;
+    [SerializeField] private GameObject cubePrefab;
+    [SerializeField] private ARRaycastManager raycastManager;
+    [SerializeField] private ARPlaneManager arPlaneManager;
 
-    private ARRaycastManager raycastManager;
-    private ARPlaneManager arPlaneManager;
-    private Camera arCam;
+    private GameObject placedObject;
+    private String returnedText = "sphere";
 
-    private List<ARRaycastHit> hits = new List<ARRaycastHit>();
-
-    void Awake()
-    {
-        raycastManager = GetComponent<ARRaycastManager>();
-        arPlaneManager = GetComponent<ARPlaneManager>();
-
+    void Awake() {
+        arPlaneManager.planesChanged += PlaneChanged;
     }
-
 
     void Start()
     {
-        arCam = GetComponentInChildren<Camera>();
+        arPlaneManager.enabled = false;
+
     }
 
     void Update()
     {
 
-        // If detected QR Code 1
-        if (Input.GetMouseButtonDown(0))
+        ReturnPrefab();
+
+        if(Input.touchCount > 0)
         {
-            Ray ray = arCam.ScreenPointToRay(Input.mousePosition);
-            if (raycastManager.Raycast(ray, hits))
-            {
-                Pose pose = hits[0].pose;
-                Instantiate(spherePrefab, pose.position, pose.rotation);
-            }
+            TogglePlaneDetection();
+        }
+  
+    }
+
+    private void ReturnPrefab()
+    {
+        if (returnedText == "cube")
+        {
+            placedObject = cubePrefab;
         }
 
-        // If detected QR Code 2
-        if (Input.GetMouseButtonDown(1))
+        if (returnedText == "sphere")
         {
-            Ray ray = arCam.ScreenPointToRay(Input.mousePosition);
-            if (raycastManager.Raycast(ray, hits))
-            {
-                Pose pose = hits[0].pose;
-                Instantiate(cubePrefab, pose.position, pose.rotation);
-            }
+            placedObject = spherePrefab;
         }
+    }
 
+    private void PlaneChanged(ARPlanesChangedEventArgs args) 
+    {
+        if(args.added != null && returnedText != null) {
+            ARPlane arPlane = args.added[0];
+            Instantiate(placedObject, arPlane.transform.position, Quaternion.identity);
+            TogglePlaneDetection();
+        }
+    }
 
+    private void TogglePlaneDetection()
+    {
+        arPlaneManager.enabled = !arPlaneManager.enabled;
+
+        foreach (ARPlane plane in arPlaneManager.trackables)
+        {
+            plane.gameObject.SetActive(arPlaneManager.enabled);
+        }
     }
 
 }
