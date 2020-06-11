@@ -17,6 +17,7 @@ public class PlacementController : MonoBehaviour
 
     private GameObject placedObject;
     private String returnedText = "sphere";
+    public Button yourButton;
 
     void Awake() {
         arPlaneManager.planesChanged += PlaneChanged;
@@ -25,7 +26,14 @@ public class PlacementController : MonoBehaviour
     void Start()
     {
         arPlaneManager.enabled = false;
+        Button btn = yourButton.GetComponent<Button>();
+        btn.onClick.AddListener(TaskOnClick);
 
+    }
+
+    void TaskOnClick(){
+        String strHi = SwiftForUnity.HiFromSwift();
+        Debug.Log(strHi);
     }
 
     void Update()
